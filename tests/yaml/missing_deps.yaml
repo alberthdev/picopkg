@@ -1,0 +1,16 @@
+pkgs:
+    a:
+        depends:
+            - b
+    
+    b:
+        depends:
+            - c
+    
+    x:
+        depends:
+            - y
+    
+    y:
+        depends:
+            - z

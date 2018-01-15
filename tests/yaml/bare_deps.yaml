@@ -1,0 +1,14 @@
+pkgs:
+    a:
+        depends:
+            - b
+    
+    b:
+        depends: []
+
+    x:
+        depends:
+            - y
+    
+    y:
+        depends: []

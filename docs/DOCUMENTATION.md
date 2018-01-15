@@ -128,7 +128,7 @@ A few fields are necessary to kick it off:
       Mutex with `archive` (because you can't guarantee directory
       integrity)?
       
-  * `depends_on`: dependencies that the package requires before being
+  * `depends`: dependencies that the package requires before being
      built. This is a list of other package IDs, specified as a YAML
      list of strings.
   
@@ -160,33 +160,70 @@ A few fields are necessary to kick it off:
 
 Example:
 
-    # Package Metadata
-    id: ffms2
-    name: FFmpegSource (FFMS2)
-    description: A cross-platform wrapper library around FFmpeg/libav
-    homepage: https://github.com/FFMS/ffms2
-    source_url: https://github.com/FFMS/ffms2/archive/2.23.tar.gz
-    
-    # Dependencies
-    depends_on:
-        - ffmpeg
-    
-    # Package settings
-    settings:
-        # Inherit any build environmental variables from dependencies.
-        inherit_build_env_from_depends: true
-    
-    # Configuration Definition
-    config:
-        - ./bootstrap.sh --prefix=__PREFIX__ --with-icu=__PREFIX__
-    
-    # Build Definition
-    build:
-        - ./b2 link=static
-    
-    # Install Definition
-    install:
-        - ./b2 link=static install
+    include:
+        - dummy.yaml
+    pkgs:
+        ffms2:
+            metadata:
+                # Package Metadata
+                name: FFmpegSource (FFMS2)
+                description: A cross-platform wrapper library around FFmpeg/libav
+                homepage: https://github.com/FFMS/ffms2
+                source_url: https://github.com/FFMS/ffms2/archive/2.23.tar.gz
+                source_folder: ffms2-2.23
+            
+            # Dependencies
+            depends:
+                - ffmpeg
+                - icu
+            
+            # Environment:
+            env:
+                PKG_CONFIG_PATH: {ffmpeg.prefix}/lib/pkgconfig
+            
+            # Define steps
+            actions:
+                - download
+                - extract
+                - prepare:
+                    always: true
+                - config
+                - build
+                - install
+            
+            # Download Definition
+            download:
+                steps:
+                    - picopkg.download:
+                        url: {metadata.source_url}
+                        set_path_to: persist.saved_archive
+                        md5:
+                        sha1:
+                        sha256:
+            
+            # Extract Definition
+            extract:
+                steps:
+                    - tar -xvf {metadata.saved_archive}
+            
+            # Prepare Definition
+            prepare:
+                steps:
+                    - picopkg.make_folder:
+                        set_path_to: metadata.prefix
+                    - cd {metadata.source_folder}
+            
+            # Configuration Definition
+            config:
+                - ./bootstrap.sh --prefix={metadata.prefix} --with-icu={icu.metadata.prefix} --with-ffmpeg={ffmpeg.metadata.prefix}
+            
+            # Build Definition
+            build:
+                - ./b2 link=static
+            
+            # Install Definition
+            install:
+                - ./b2 link=static install
 
 Internals
 ----------
